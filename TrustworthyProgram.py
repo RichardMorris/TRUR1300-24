@@ -1,2 +1,2 @@
 import os
-os.system("shutdown /s /t 1")
+print ( "No Shutdown for you :[") #os.system("shutdown /s /t 1")
