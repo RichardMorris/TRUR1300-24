@@ -27,7 +27,7 @@ def bubble_reverse():
 lists = 0
 nums = []
 while lists == 0:
-    nums.append (input("add to the list: "))
+    nums.append (input("add a single digit number to the list to the list: "))
     yn = input("do you wish to add another value? yes or no? ")
     if yn == "n" or yn == "no":
         lists = 1
