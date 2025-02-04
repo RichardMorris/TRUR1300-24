@@ -20,7 +20,7 @@ T=tut.Turtle()
 T.color("white")
 T.penup()
 T.hideturtle()
-
+T.width(1)
 Event = False
 lastClick = [0,0]
 
@@ -127,6 +127,7 @@ def get_move(playState, board):
 
 def check_state(board, playState):
     # Check rows and columns for win
+    T.width(5)
     for i in range(3):
         if board[i][0] == board[i][1] == board[i][2] != 0:
             get_T_pos([i,0])
@@ -144,15 +145,12 @@ def check_state(board, playState):
     # Check diagonals for win
     if board[0][0] == board[1][1] == board[2][2] != 0:
         T.goto(-300,-300)
-        T.width(5)
+        
         draw_board_line(45, 850)
-        T.width(1)
         return f"{'Player' if board[0][0] == 1 else 'Computer'} wins!"
     elif board[0][2] == board[1][1] == board[2][0] != 0:
         T.goto(-300,300)
-        T.width(5)
         draw_board_line(315, 850)
-        T.width(1)
         return f"{'Player' if board[0][2] == 1 else 'Computer'} wins!"
 
     # Check for draw
@@ -170,6 +168,7 @@ def game_loop():
     turns = ["Player","Computer"]
     playState = turns[random.randint(0,1)]
     while playState in turns:
+        T.width(2)
         print(f"{playState}'s Turn")
         board, playState = get_move(playState, board)
         playState = check_state(board, playState)
