@@ -109,12 +109,17 @@ def get_move(playState, board):
                 board[lastClick[0]][lastClick[1]] = 1
                 draw_cross()
                 success = True
+                playState = "Computer"
         else:
             move = [random.randint(0,2),random.randint(0,2)]
             if board[move[0]][move[1]] == 0:
                 get_T_pos(move)
                 board[move[0]][move[1]] = 2
                 draw_naught()
+                success = True
+                playState = "Player"
+        return board, playState
+                
 
 
 
@@ -126,14 +131,12 @@ def get_move(playState, board):
 def game_loop():
     board = [[0 for _ in range(3)] for _ in range(3)]
     draw_board()
-    first = random.randint(1,2)
-    if first == 1:
-        playState = "Player"
-    else:
-        playState = "Computer"
-    while playState in ["Player","Computer"]:
+    turns = ["Player","Computer"]
+    playState = turns[random.randint(0,1)]
+    while playState in turns:
         print(f"{playState}'s Turn")
-        board = get_move(playState, board)
+        board, playState = get_move(playState, board)
+
 
 
 
