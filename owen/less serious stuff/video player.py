@@ -4,8 +4,8 @@
 import cv2
 
 # Create a VideoCapture object and read from input file
-# put your video file name in here, ensure it is in the same folder directory
-cap = cv2.VideoCapture('___')
+# your video file should be in the same folder directory
+cap = cv2.VideoCapture('video file here')
 
 # Check if camera opened successfully
 if (cap.isOpened()== False):
