@@ -1,49 +1,71 @@
-body {
-    background-color: lightblue;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%; 
+  background-color: lightblue;
+}
+
+#banner {
+  color: black;
+  margin: 0px 0px 0px 0px;
+  padding: 40px;
+  border-style: hidden;
+  border-width: 5px;
+  border-radius: 5px;
+  background-color: gray;
+  background-image: url('Designer.jpeg');
+  background-size: cover; /* This ensures the image covers the entire banner */
+  background-position: center; /* This centers the image within the banner */
   
-  #banner {
-    color: navy;
-    margin: 20px 20px 20px 20px;
-    padding: 20px;
-    border-style: hidden;
-    border-width: 5px;
-    border-radius: 5px;
-    background-color: gray;
 
 
-  }
+}
 
-  ul {
-    list-style-type: none;
-    justify-content: center;
-    display: flex;
-    margin: 20;
-    padding: 20;
-    overflow: hidden;
-    background-color:   black;
-  }
-  
-  li {
-    margin: 0px 50px;
-    float: left;
-    background-color: gray;
-  }
-  
-  li a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 20px 50px;
-    text-decoration: none;
-  }
-  
-  /* Change the link color to #111 (black) on hover */
-  li a:hover {
-    background-color:   lightgray;
-  }
 
-  p {
-    color: red;
-    
-  }
+#navigationBar {
+  list-style-type: none;
+  justify-content: center;
+  display: flex;
+  margin: 0px 0px 20px 0px;
+  padding: 20;
+  overflow: hidden;
+  background-color:   black;
+}
+
+#navigationBar li {
+  margin: 0px 50px;
+  float: left;
+  background-color: gray;
+}
+
+#navigationBar li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 20px 50px;
+  text-decoration: none;
+}
+
+/* Change the link color to #111 (black) on hover */
+#navigationBar li a:hover {
+  background-color:   lightgray;
+}
+
+#pagetitle{
+  margin: 5px 10px;
+  border-width: 1px;
+  color: black;
+  font-size: 50px;
+  text-decoration: underline;
+
+}
+
+table{
+  margin: 0 auto;
+  align-self: center;
+}
+
+p {
+  color: red;
+  
+}
