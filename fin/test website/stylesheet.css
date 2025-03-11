@@ -1,0 +1,95 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%; 
+  background-color: lightblue;
+}
+
+#banner {
+  color: black;
+  margin: 0px 0px 0px 0px;
+  padding: 40px;
+  border-style: hidden;
+  border-width: 5px;
+  border-radius: 5px;
+  background-color: gray;
+  background-image: url('Designer.jpeg');
+  background-size: cover; /* This ensures the image covers the entire banner */
+  background-position: center; /* This centers the image within the banner */
+  
+
+
+}
+
+.container {
+  display: grid; 
+  grid-template-columns: 0.7fr 1.9fr 0.4fr; 
+  grid-template-rows: 0.5fr 1.4fr 1.1fr 1.5fr 0.5fr; 
+  gap: 0px 0px; 
+  grid-template-areas: 
+    "nav bar nav bar nav bar"
+    "subnav bar main ads"
+    "subnav bar main ads"
+    "subnav bar main ads"
+    "footer  footer  footer "; 
+}
+
+.nav bar { grid-area: nav bar; }
+
+  #navigationBar {
+    list-style-type: none;
+    justify-content: center;
+    display: flex;
+    margin: 0px 0px 20px 0px;
+    padding: 20;
+    overflow: hidden;
+    background-color:   black;
+  }
+
+  #navigationBar li {
+    margin: 0px 50px;
+    float: left;
+    background-color: gray;
+  }
+
+  #navigationBar li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 20px 50px;
+    text-decoration: none;
+  }
+
+  /* Change the link color to #111 (black) on hover */
+  #navigationBar li a:hover {
+    background-color:   lightgray;
+  }
+
+.subnav bar { grid-area: subnav bar; } 
+
+.main { grid-area: main; }
+  p {
+    color: red;
+    
+  }
+
+  table{
+    margin: 0 auto;
+    align-self: center;
+  }
+
+.ads { grid-area: ads; }
+
+.footer  { grid-area: footer ; }
+
+
+
+
+
+
+
+
+
+
+
+
