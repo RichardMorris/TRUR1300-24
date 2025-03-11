@@ -30,8 +30,9 @@ if __name__ == "__main__":
     while True:
         # at the start of each loop, validation is set to 0 as to not let prior numbers intefere when appending new numbers
         validation = 0
-        print("Enter positive number, enter -1 to end")
-        num = int(input())
+        print('You will be asked for a sequence positive numbers you wish to be sorted.')
+        print("Enter '-1' to sort the numbers.")
+        num = int(input('Input a single number: '))
 
         # if validation == 1 the number won't be appended to the list
         if num <-1:
