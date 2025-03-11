@@ -4,10 +4,9 @@ def qsort(data):
     pivot = data[0]
     lower = [x for x in data if x < pivot]
     higher = [x for x in data if x > pivot]
-    mid = [x for x in data if x == pivot]
     qlower = qsort(lower)
     qhigher = qsort(higher)
-    return qlower + mid + qhigher
+    return qlower + [pivot] + qhigher
 
 def cheatsort(data):
     counts = [0] * 100
@@ -20,6 +19,5 @@ def cheatsort(data):
         
     return result
 
-data = [3, 6, 8, 10, 1, 2, 1]
+data = [1, 3, 6, 8, 10, 1, 2, 1]
 print(qsort(data))
-print(cheatsort(data))
