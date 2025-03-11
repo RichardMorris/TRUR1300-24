@@ -19,5 +19,13 @@ def cheatsort(data):
         
     return result
 
-data = [1, 3, 6, 8, 10, 1, 2, 1]
-print(qsort(data))
+if __name__ == "__main__":
+    data = []
+    while True:
+        print("Enter positive number -1 to end")
+        num = int(input())
+        if num ==-1:
+            break
+        data.append(num)
+    sorted = qsort(data)
+    print(sorted)
