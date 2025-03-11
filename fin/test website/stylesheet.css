@@ -21,51 +21,75 @@ html, body {
 
 }
 
-
-#navigationBar {
-  list-style-type: none;
-  justify-content: center;
-  display: flex;
-  margin: 0px 0px 20px 0px;
-  padding: 20;
-  overflow: hidden;
-  background-color:   black;
+.container {
+  display: grid; 
+  grid-template-columns: 0.7fr 1.9fr 0.4fr; 
+  grid-template-rows: 0.5fr 1.4fr 1.1fr 1.5fr 0.5fr; 
+  gap: 0px 0px; 
+  grid-template-areas: 
+    "nav bar nav bar nav bar"
+    "subnav bar main ads"
+    "subnav bar main ads"
+    "subnav bar main ads"
+    "footer  footer  footer "; 
 }
 
-#navigationBar li {
-  margin: 0px 50px;
-  float: left;
-  background-color: gray;
-}
+.nav bar { grid-area: nav bar; }
 
-#navigationBar li a {
-  display: block;
-  color: white;
-  text-align: center;
-  padding: 20px 50px;
-  text-decoration: none;
-}
+  #navigationBar {
+    list-style-type: none;
+    justify-content: center;
+    display: flex;
+    margin: 0px 0px 20px 0px;
+    padding: 20;
+    overflow: hidden;
+    background-color:   black;
+  }
 
-/* Change the link color to #111 (black) on hover */
-#navigationBar li a:hover {
-  background-color:   lightgray;
-}
+  #navigationBar li {
+    margin: 0px 50px;
+    float: left;
+    background-color: gray;
+  }
 
-#pagetitle{
-  margin: 5px 10px;
-  border-width: 1px;
-  color: black;
-  font-size: 50px;
-  text-decoration: underline;
+  #navigationBar li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 20px 50px;
+    text-decoration: none;
+  }
 
-}
+  /* Change the link color to #111 (black) on hover */
+  #navigationBar li a:hover {
+    background-color:   lightgray;
+  }
 
-table{
-  margin: 0 auto;
-  align-self: center;
-}
+.subnav bar { grid-area: subnav bar; } 
 
-p {
-  color: red;
-  
-}
+.main { grid-area: main; }
+  p {
+    color: red;
+    
+  }
+
+  table{
+    margin: 0 auto;
+    align-self: center;
+  }
+
+.ads { grid-area: ads; }
+
+.footer  { grid-area: footer ; }
+
+
+
+
+
+
+
+
+
+
+
+
