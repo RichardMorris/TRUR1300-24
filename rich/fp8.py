@@ -172,6 +172,12 @@ class FP8:
 
         return self.from_extended(sign, sum, exp)
         
+    def __sub__(self, other):
+        if self.is_nan() or other.is_nan():
+            return NaN1
+        val = FP8(other.get_bits() ^ 0b10000000)  # flip sign bit
+        return self.__add__(val)
+    
     def __mul__(self, other):
         if self.is_nan() or other.is_nan():
             return NaN1
@@ -191,22 +197,22 @@ class FP8:
         om = other.get_extended_mantissa()
         oe = other.get_normalised_exponent()-3
         # multiply mantissas and add exponents
-        sum = sm * om
+        mul = sm * om
         exp = se + oe +3
-        return self.from_extended(sign, sum, exp)
+        return self.from_extended(sign, mul, exp)
 
-    def from_extended(self, sign: int, sum: int, exp: int) -> 'FP8':
+    def from_extended(self, sign: int, val: int, exp: int) -> 'FP8':
         # rescale so mantissa is in range [0,16)
-        while sum >= 16:
-            sum >>= 1
+        while val >= 16:
+            val >>= 1
             exp += 1
         # rescale very small number so exponent in range
         if exp < -6:
-            sum >>= (-6-exp)
+            val >>= (-6-exp)
             exp = -6
         # unless subnormal rescale to get mantissa in range [8,16)
-        while sum < 8 and exp > -6:
-            sum <<= 1
+        while val < 8 and exp > -6:
+            val <<= 1
             exp -= 1
         # check for overflow
         if exp >=8:
@@ -214,10 +220,10 @@ class FP8:
         if exp < -6:
             return PosZero if sign == 0 else NegZero
         # adjust exponent for subnormal numbers
-        if exp == -6 and sum < 8:
+        if exp == -6 and val < 8:
                 exp = -7
         # construct the byte representation
-        byte = (sign << 7) | (exp + 7) << 3 | int(sum) & 0b111
+        byte = (sign << 7) | (exp + 7) << 3 | int(val) & 0b111
         res = FP8(byte)
         return res
         
