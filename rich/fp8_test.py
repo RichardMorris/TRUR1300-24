@@ -52,6 +52,20 @@ class TestFP8(unittest.TestCase):
             else:
                 self.assertEqual(val, self.values[i])
 
+    def test_equal(self):
+        for i in range(0, 121):
+            fp8 = FP8(i)
+            self.assertEqual(fp8, fp8)
+        for i in range(128, 249):
+            fp8 = FP8(i)
+            self.assertEqual(fp8, fp8)
+        for i in range(121, 128):
+            fp8 = FP8(i)
+            self.assertNotEqual(fp8, fp8)
+        for i in range(249, 255):
+            fp8 = FP8(i)
+            self.assertNotEqual(fp8, fp8)
+
     def test_from_float(self):
         for i in range(0, 255):
             selval = self.values[i]
@@ -68,22 +82,39 @@ class TestFP8(unittest.TestCase):
         v255 = 255.9
         f255 = FP8.from_float(v255)
         self.assertFalse(f255.is_infinite())
-        self.assertEqual(f255.get_bits(), PosMax.get_bits())
+        self.assertEqual(f255, PosMax)
         v256 = 256.0
         f256 = FP8.from_float(v256)
         self.assertTrue(f256.is_infinite())
-        self.assertEqual(f256.get_bits(), PosInf.get_bits())
+        self.assertEqual(f256, PosInf)
         vbigzero = 1.0/513
         fbigzero = FP8.from_float(vbigzero)
-        self.assertEqual(fbigzero.get_bits(), PosZero.get_bits())
+        self.assertEqual(fbigzero, PosZero)
         vsmallestpos = 1.0/512
         fsmallestpos = FP8.from_float(vsmallestpos)
-        self.assertEqual(fsmallestpos.get_bits(), PosMin.get_bits())
+        self.assertEqual(fsmallestpos, PosMin)
 
     def test_add(self):
-        fp8_1 = FP8(0b00000001)
-        fp8_2 = FP8(0b00000010)
-        self.assertEqual(fp8_1.to_float(), 0.001953125)
-        self.assertEqual(fp8_2.to_float(), 0.00390625)
+        fp8_1 = FP8.from_float(48.0)
+        fp8_2 = FP8.from_float(240.0)
+        expected = PosInf
         result = fp8_1 + fp8_2
-        self.assertEqual(result, 0.001953125+0.00390625)
+        self.assertEqual(result, expected)
+
+        for i in range(0, 255):
+            for j in range(0, 255):
+                fp8_1 = FP8(i)
+                fp8_2 = FP8(j)
+                val = fp8_1.to_float()
+                val2 = fp8_2.to_float()
+                result = fp8_1 + fp8_2
+                expected = FP8.from_float(val + val2)
+                if expected.is_nan():
+                    self.assertTrue(result.is_nan())
+                elif expected.is_zero():
+                    self.assertTrue(result.is_zero())
+                else:
+                    if expected != result:
+                        print(f"\n{fp8_1} + {fp8_2} = {result} != {expected}")
+                        print(result.__repr__(), expected.__repr__())
+                    self.assertEqual(result, expected)
