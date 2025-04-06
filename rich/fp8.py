@@ -161,23 +161,58 @@ class FP8:
         # give both mantissa the same scale
         ss = (sm <<(se - exp)) * self.get_sign_val()
         os = (om <<(oe - exp)) * other.get_sign_val()
+
         # add mantissas
         sum = ss + os
+
         if sum == 0:
             return PosZero
         # extract sign
         (sign, sum) = (0, sum) if sum > 0 else (1, -sum)
+
+        return self.from_extended(sign, sum, exp)
+        
+    def __mul__(self, other):
+        if self.is_nan() or other.is_nan():
+            return NaN1
+        sign = self.get_sign() ^ other.get_sign()
+        if self.is_infinite() and other.is_zero():
+            return NaN1
+        if self.is_zero() and other.is_infinite():
+            return NaN1
+        if self.is_zero() or other.is_zero():
+            return PosZero if sign == 0 else NegZero
+        
+        if self.is_infinite() or other.is_infinite():
+            return PosInf if sign == 0 else NegInf
+        # now numbers
+        sm = self.get_extended_mantissa()
+        se = self.get_normalised_exponent()-3
+        om = other.get_extended_mantissa()
+        oe = other.get_normalised_exponent()-3
+        # multiply mantissas and add exponents
+        sum = sm * om
+        exp = se + oe +3
+        return self.from_extended(sign, sum, exp)
+
+    def from_extended(self, sign: int, sum: int, exp: int) -> 'FP8':
         # rescale so mantissa is in range [0,16)
         while sum >= 16:
             sum >>= 1
             exp += 1
-        # unless subnormal resale to get mantissa in range [8,16)
-        while exp > -6 and sum < 8:
+        # rescale very small number so exponent in range
+        if exp < -6:
+            sum >>= (-6-exp)
+            exp = -6
+        # unless subnormal rescale to get mantissa in range [8,16)
+        while sum < 8 and exp > -6:
             sum <<= 1
             exp -= 1
         # check for overflow
-        if exp ==8:
+        if exp >=8:
             return PosInf if sign == 0 else NegInf
+        if exp < -6:
+            return PosZero if sign == 0 else NegZero
         # adjust exponent for subnormal numbers
         if exp == -6 and sum < 8:
                 exp = -7
@@ -185,11 +220,7 @@ class FP8:
         byte = (sign << 7) | (exp + 7) << 3 | int(sum) & 0b111
         res = FP8(byte)
         return res
-    
-    @classmethod
-    def staticValues(cls,rep : int) -> 'FP8':
-        return FP8(rep) 
-    
+        
 PosZero= FP8(0b00000000)  # Positive 0 representation
 PosMin = FP8(0b00000001)  # Minimum non zero positive
 PosOne = FP8(0b00111000)  # Positive 1 representation

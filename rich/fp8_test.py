@@ -95,12 +95,6 @@ class TestFP8(unittest.TestCase):
         self.assertEqual(fsmallestpos, PosMin)
 
     def test_add(self):
-        fp8_1 = FP8.from_float(48.0)
-        fp8_2 = FP8.from_float(240.0)
-        expected = PosInf
-        result = fp8_1 + fp8_2
-        self.assertEqual(result, expected)
-
         for i in range(0, 255):
             for j in range(0, 255):
                 fp8_1 = FP8(i)
@@ -114,7 +108,34 @@ class TestFP8(unittest.TestCase):
                 elif expected.is_zero():
                     self.assertTrue(result.is_zero())
                 else:
-                    if expected != result:
-                        print(f"\n{fp8_1} + {fp8_2} = {result} != {expected}")
-                        print(result.__repr__(), expected.__repr__())
+                    self.assertEqual(result, expected)
+
+    def test_mul(self):
+        l = FP8(56)
+        r = FP8(56)
+        expected = FP8(56)
+        result = l * r
+        self.assertEqual(result, expected)
+
+        l = FP8(1)
+        r = FP8(56)
+        expected = FP8(1)
+        result = l * r
+        self.assertEqual(result, expected)
+
+        for i in range(0, 255):
+            for j in range(0, 255):
+                l = FP8(i)
+                r = FP8(j)
+                val = l.to_float()
+                val2 = r.to_float()
+                expected = FP8.from_float(val * val2)
+                result = l * r
+                expected = FP8.from_float(val * val2)
+                #print(f"{i},{j}\t{l.__repr__()} * {r.__repr__()} = {result.__repr__()} expected {expected.__repr__()}")
+                if expected.is_nan():
+                    self.assertTrue(result.is_nan())
+                elif expected.is_zero():
+                    self.assertTrue(result.is_zero())
+                else:
                     self.assertEqual(result, expected)
