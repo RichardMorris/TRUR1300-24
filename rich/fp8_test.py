@@ -53,19 +53,42 @@ class TestFP8(unittest.TestCase):
                 self.assertEqual(val, self.values[i])
 
     def test_equal(self):
-        for i in range(0, 121):
+        
+        for i in range(0, 121): # positive numbers, zero and infinity
             fp8 = FP8(i)
             self.assertEqual(fp8, fp8)
-        for i in range(128, 249):
-            fp8 = FP8(i)
-            self.assertEqual(fp8, fp8)
-        for i in range(121, 128):
+        for i in range(121, 128): # NaN values
             fp8 = FP8(i)
             self.assertNotEqual(fp8, fp8)
-        for i in range(249, 255):
+        for i in range(128, 249): # negative numbers, zero and infinity
+            fp8 = FP8(i)
+            self.assertEqual(fp8, fp8)
+        for i in range(249, 256): # NaN values
             fp8 = FP8(i)
             self.assertNotEqual(fp8, fp8)
 
+        # +/- zero are equal
+        self.assertEqual(PosZero, NegZero)
+        self.assertEqual(NegZero, PosZero)
+
+        # all other values are not equal 
+        for i in range(0, 256): 
+            for j in range(0, 256):
+                if (i == j) or (i == 0 and j == 128) or (i == 128 and j == 0):
+                    continue
+                l = FP8(i)
+                r = FP8(j)
+                self.assertNotEqual(l, r)
+
+    def test_neg(self):
+        for i in range(0, 255):
+            fp8 = FP8(i)
+            neg = -fp8
+            if fp8.is_nan():
+                self.assertTrue(neg.is_nan())
+            else:
+                self.assertEqual(neg.get_bits(), fp8.get_bits() ^ 0b10000000)
+    
     def test_from_float(self):
         for i in range(0, 255):
             selval = self.values[i]

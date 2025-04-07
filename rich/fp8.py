@@ -92,6 +92,8 @@ class FP8:
         if isinstance(other, FP8):
             if self.is_nan() or other.is_nan():
                 return False
+            if self.is_zero() and other.is_zero():
+                return True
             return self.get_bits() == other.get_bits()
         return False
     
@@ -163,7 +165,11 @@ class FP8:
             return NaN1
         val = FP8(other.get_bits() ^ 0b10000000)  # flip sign bit
         return self.__add__(val)
-    
+
+    def __neg__(self):
+        val = FP8(self.get_bits() ^ 0b10000000)  # flip sign bit
+        return val
+
     def __mul__(self, other):
         if self.is_nan() or other.is_nan():
             return NaN1
