@@ -3,7 +3,7 @@
 import math
 
 class FP8:
-    
+    __slots__ = ('bits')
     def __init__(self, rep: int):
         self.bits = rep
 
@@ -31,33 +31,28 @@ class FP8:
     def get_mantissa(self) -> int:
         return self.bits & 0b111
     
-    def get_extended_mantissa(self) -> int:
-        """Gets the extended mantissa value, in the range [0, 16).
+    def get_extended_rep(self) -> tuple[int,int,int]:
+        """A rep (sign, mantissa, exponent) such that
+        val == sign * mantissa * 2**exponent
+        With an integer mantissa
         """
         if self.get_exponent() == 0:
-            return self.get_mantissa()
+            return (self.get_sign_val(),self.get_mantissa(),-9)
         else:
-            return self.get_mantissa() + 0b1000
+            return (self.get_sign_val(),self.get_mantissa() + 0b1000, self.get_exponent() - 10)
 
-    def get_extended_exponent(self) -> int:
-        if self.get_exponent() == 0:
-            return -3
-        else:
-            return self.get_exponent() -10
-
-    def get_normalised_mantissa(self) -> float:
-        """Gets floating point rep of the mantissa adjusted for subnormal numbers.
+    def get_normalised_rep(self) -> tuple[int,float,int]:
+        """Gets floating point rep (sign, mantissa, exponent) such that
+        val == sign * mantissa * 2**exponent
+        and the mantissa is floating point number 1.xxxxx for normalised numbers
+        and 0.xxxxx for subnormal numbers.
         """
         if self.get_exponent() == 0:
-            return self.get_mantissa() / 8.0
+            return (self.get_sign_val(), self.get_mantissa() / 8.0, -6)
         else:
-            return 1 + (self.get_mantissa() / 8.0)
-
-    def get_normalised_exponent(self) -> int:
-        if self.get_exponent() == 0:
-            return -6
-        else:
-            return self.get_exponent() - 7
+            return (self.get_sign_val(), 
+                    1 + (self.get_mantissa() / 8.0), 
+                    self.get_exponent() - 7)
     
     def is_infinite(self) -> bool:
         return self.get_exponent() == 0b1111 and self.get_mantissa() == 0
@@ -77,14 +72,9 @@ class FP8:
             return float('inf') if self.get_sign() == 0 else float('-inf')
         if self.is_nan():
             return float('nan')
-        #if self.is_zero():
-        #    sign = self.get_sign()
-        #    return float('-0.0') if sign else float('0.0')
         
-        sign = self.get_sign()
-        exponent_value = self.get_normalised_exponent()
-        mantissa_value = self.get_normalised_mantissa()
-        return (-1) ** sign * (mantissa_value) * (2 ** exponent_value)
+        (signval,mantissa,exponent) = self.get_normalised_rep()
+        return signval * (mantissa) * (2 ** exponent)
     
     def __repr__(self) -> str:
         if self.is_nan():
@@ -92,17 +82,15 @@ class FP8:
         if self.is_infinite():
             return "Inf" if self.get_sign() == 0 else "-Inf"
         sign = self.get_sign()
-        exponent = self.get_normalised_exponent()
-        mantissa = self.get_normalised_mantissa()
-        signstr = "-1" if sign else "1"
-        return f"{signstr}*{mantissa:.3f}*2^{exponent}"
+        (signval,mantissa,exponent) = self.get_normalised_rep()
+        return f"{signval}*{mantissa:.3f}*2^{exponent}"
     
     def __str__(self) -> str:
         return self.to_float().__str__()
     
     def __eq__(self, other) -> bool:
         if isinstance(other, FP8):
-            if self.is_nan() and other.is_nan():
+            if self.is_nan() or other.is_nan():
                 return False
             return self.get_bits() == other.get_bits()
         return False
@@ -152,15 +140,13 @@ class FP8:
         if other.is_infinite():
             return other         
         # now numbers 
-        sm = self.get_extended_mantissa()
-        se = self.get_normalised_exponent()
-        om = other.get_extended_mantissa()
-        oe = other.get_normalised_exponent()
+        (ssg,sm,se) = self.get_extended_rep()
+        (osg,om,oe) = other.get_extended_rep()
 
         exp = min(se,oe)
         # give both mantissa the same scale
-        ss = (sm <<(se - exp)) * self.get_sign_val()
-        os = (om <<(oe - exp)) * other.get_sign_val()
+        ss = (sm <<(se - exp)) * ssg
+        os = (om <<(oe - exp)) * osg
 
         # add mantissas
         sum = ss + os
@@ -170,7 +156,7 @@ class FP8:
         # extract sign
         (sign, sum) = (0, sum) if sum > 0 else (1, -sum)
 
-        return self.from_extended(sign, sum, exp)
+        return self.from_rep(sign, sum, exp)
         
     def __sub__(self, other):
         if self.is_nan() or other.is_nan():
@@ -192,41 +178,53 @@ class FP8:
         if self.is_infinite() or other.is_infinite():
             return PosInf if sign == 0 else NegInf
         # now numbers
-        sm = self.get_extended_mantissa()
-        se = self.get_normalised_exponent()-3
-        om = other.get_extended_mantissa()
-        oe = other.get_normalised_exponent()-3
+        (ss,sm,se) = self.get_extended_rep()
+        (os,om,oe) = other.get_extended_rep()
         # multiply mantissas and add exponents
         mul = sm * om
-        exp = se + oe +3
-        return self.from_extended(sign, mul, exp)
+        exp = se + oe
+        return self.from_rep(sign, mul, exp)
 
-    def from_extended(self, sign: int, val: int, exp: int) -> 'FP8':
-        # rescale so mantissa is in range [0,16)
+    def __truediv__(self, other):
+        return NotImplementedError("Division is not implemented for FP8.")
+
+    def __float__(self) -> float:
+        """Convert the FP8 instance to a float.
+        """
+        return self.to_float()  
+    
+    def from_rep(self, sign: int, val: int, exp: int) -> 'FP8':
+        """Constructs a FP8 instance from the sign, mantissa and exponent.
+        Where sign is 0 for positive and 1 for negative.
+        The mantissa is an integer
+        and the exponent is an integer in the range [-9, 5].
+        So val == (-1)^sign * mantissa * 2**exponent
+        """
+        # rescale so mantissa is in range [0,16) i.e. 0b0000 to 0b1111
         while val >= 16:
             val >>= 1
             exp += 1
         # rescale very small number so exponent in range
-        if exp < -6:
-            val >>= (-6-exp)
-            exp = -6
-        # unless subnormal rescale to get mantissa in range [8,16)
-        while val < 8 and exp > -6:
+        if exp < -9:
+            val >>= (-9-exp)
+            exp = -9
+        # unless subnormal rescale to get mantissa in range [8,16) i.e. 0b1000 to 0b1111
+        while val < 8 and exp > -9:
             val <<= 1
             exp -= 1
         # check for overflow
-        if exp >=8:
+        if exp >=5:
             return PosInf if sign == 0 else NegInf
-        if exp < -6:
+        if exp < -9:
             return PosZero if sign == 0 else NegZero
         # adjust exponent for subnormal numbers
-        if exp == -6 and val < 8:
-                exp = -7
+        if exp == -9 and val < 8:
+                exp = -10
         # construct the byte representation
-        byte = (sign << 7) | (exp + 7) << 3 | int(val) & 0b111
+        byte = (sign << 7) | (exp + 10) << 3 | int(val) & 0b111
         res = FP8(byte)
         return res
-        
+      
 PosZero= FP8(0b00000000)  # Positive 0 representation
 PosMin = FP8(0b00000001)  # Minimum non zero positive
 PosOne = FP8(0b00111000)  # Positive 1 representation

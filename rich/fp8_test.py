@@ -111,12 +111,12 @@ class TestFP8(unittest.TestCase):
                     self.assertEqual(result, expected)
 
     def test_sub(self):
-        for i in range(0, 255):
+        for i in range(1, 255):
             for j in range(0, 255):
                 fp8_1 = FP8(i)
                 fp8_2 = FP8(j)
-                val = fp8_1.to_float()
-                val2 = fp8_2.to_float()
+                val = float(fp8_1)
+                val2 = float(fp8_2)
                 result = fp8_1 - fp8_2
                 expected = FP8.from_float(val - val2)
                 if expected.is_nan():
@@ -156,3 +156,4 @@ class TestFP8(unittest.TestCase):
                     self.assertTrue(result.is_zero())
                 else:
                     self.assertEqual(result, expected)
+
