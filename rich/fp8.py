@@ -20,7 +20,7 @@ class FP8:
         """Gets the sign value of the floating point number.
         Returns 1 for positive numbers and -1 for negative numbers.
         """
-        if self.get_sign() == 0:
+        if self.bits & 0b10000000 == 0:
             return 1
         else:
             return -1
@@ -31,21 +31,25 @@ class FP8:
     def get_mantissa(self) -> int:
         return self.bits & 0b111
     
-    def get_extended_rep(self) -> tuple[int,int,int]:
+    def get_int_rep(self) -> tuple[int,int,int]:
         """A rep (sign, mantissa, exponent) such that
         val == sign * mantissa * 2**exponent
-        With an integer mantissa
+        With an integer mantissa, exponent in the range [-9, 5]
+        and sign +1 for positive and -1 for negative.
         """
-        if self.get_exponent() == 0:
+        exp = self.get_exponent()
+        if exp == 0:
             return (self.get_sign_val(),self.get_mantissa(),-9)
         else:
-            return (self.get_sign_val(),self.get_mantissa() + 0b1000, self.get_exponent() - 10)
+            return (self.get_sign_val(),self.get_mantissa() + 0b1000, exp - 10)
 
-    def get_normalised_rep(self) -> tuple[int,float,int]:
+    def get_fp_rep(self) -> tuple[int,float,int]:
         """Gets floating point rep (sign, mantissa, exponent) such that
         val == sign * mantissa * 2**exponent
-        and the mantissa is floating point number 1.xxxxx for normalised numbers
+        where the mantissa is floating point number 1.xxxxx for normalised numbers
         and 0.xxxxx for subnormal numbers.
+        The exponent is in the range [-6, 7]
+        and sign +1 for positive and -1 for negative.
         """
         if self.get_exponent() == 0:
             return (self.get_sign_val(), self.get_mantissa() / 8.0, -6)
@@ -55,14 +59,18 @@ class FP8:
                     self.get_exponent() - 7)
     
     def is_infinite(self) -> bool:
-        return self.get_exponent() == 0b1111 and self.get_mantissa() == 0
+        #return self.get_exponent() == 0b1111 and self.get_mantissa() == 0
+        #return self.bits & 0b01111000 == 0b01111000 and self.get_mantissa() == 0
+        return self.bits & 0b01111111 == 0b01111000
     
     def is_nan(self) -> bool:
-        return self.get_exponent() == 0b1111 and self.get_mantissa() != 0
+        #return self.get_exponent() == 0b1111 and self.get_mantissa() != 0
+        return self.bits & 0b01111000 == 0b01111000 and self.get_mantissa() != 0
     
     def is_zero(self) -> bool:
-        return self.get_exponent() == 0 and self.get_mantissa() == 0
-    
+        #return self.get_exponent() == 0 and self.get_mantissa() == 0
+        return self.bits & 0b01111111 == 0
+
     def is_subnormal(self) -> bool:
         return self.get_exponent() == 0 and self.get_mantissa() != 0
     
@@ -73,7 +81,7 @@ class FP8:
         if self.is_nan():
             return float('nan')
         
-        (signval,mantissa,exponent) = self.get_normalised_rep()
+        (signval,mantissa,exponent) = self.get_fp_rep()
         return signval * (mantissa) * (2 ** exponent)
     
     def __repr__(self) -> str:
@@ -81,9 +89,9 @@ class FP8:
             return "NaN"
         if self.is_infinite():
             return "Inf" if self.get_sign() == 0 else "-Inf"
-        sign = self.get_sign()
-        (signval,mantissa,exponent) = self.get_normalised_rep()
-        return f"{signval}*{mantissa:.3f}*2^{exponent}"
+        (signval,mantissa,exponent) = self.get_fp_rep()
+        sign = "+" if signval == 1 else "-"
+        return f"{sign}{mantissa:.3f}*2^{exponent}"
     
     def __str__(self) -> str:
         return self.to_float().__str__()
@@ -126,35 +134,39 @@ class FP8:
         return FP8((sign << 7) | (exponent << 3) | mantissa)
     
     def __add__(self, other):
-        if self.is_nan  () or other.is_nan():
-            return NaN1 # NaN representation
-        if self.is_zero():
-            return other
-        if other.is_zero():
+        sf = self.bits & 0b01111000 == 0b01111000
+        of = other.bits & 0b01111000 == 0b01111000
+        if sf: # self is special
+            if self.bits & 0b00000111 != 0: # NaN
+                return self # NaN
+            # self is inf    
+            if of:
+                if other.bits & 0b00000111 != 0: # NaN
+                    return other # NaN
+                # other is inf
+                samesign = self.get_sign_val() == other.get_sign_val()
+                return self if samesign else NaN1
+            # other is number
             return self
-        if self.is_infinite() and other.is_infinite():
-            if  self.get_sign() != other.get_sign():
-                return NaN1   # NaN representation
-            else:
-                return self
-        if self.is_infinite():
-            return self
-        if other.is_infinite():
-            return other         
+        elif of: # self is number, other is special
+            return other # either inf or NaN
+
+
         # now numbers 
-        (ssg,sm,se) = self.get_extended_rep()
-        (osg,om,oe) = other.get_extended_rep()
+        (ss,sm,se) = self.get_int_rep() # val == ss * sm * 2^se
+        (os,om,oe) = other.get_int_rep()
 
         exp = min(se,oe)
         # give both mantissa the same scale
-        ss = (sm <<(se - exp)) * ssg
-        os = (om <<(oe - exp)) * osg
-
+        sn = (sm <<(se - exp))
+        on = (om <<(oe - exp))
+        if ss == -1:
+            sn = -sn
+        if os == -1:
+            on = -on
         # add mantissas
-        sum = ss + os
+        sum = sn + on
 
-        if sum == 0:
-            return PosZero
         # extract sign
         (sign, sum) = (0, sum) if sum > 0 else (1, -sum)
 
@@ -163,7 +175,7 @@ class FP8:
     def __sub__(self, other):
         if self.is_nan() or other.is_nan():
             return NaN1
-        val = FP8(other.get_bits() ^ 0b10000000)  # flip sign bit
+        val = -other  # flip sign bit
         return self.__add__(val)
 
     def __neg__(self):
@@ -171,25 +183,34 @@ class FP8:
         return val
 
     def __mul__(self, other):
-        if self.is_nan() or other.is_nan():
-            return NaN1
-        sign = self.get_sign() ^ other.get_sign()
-        if self.is_infinite() and other.is_zero():
-            return NaN1
-        if self.is_zero() and other.is_infinite():
-            return NaN1
-        if self.is_zero() or other.is_zero():
-            return PosZero if sign == 0 else NegZero
-        
-        if self.is_infinite() or other.is_infinite():
+        sf = self.bits & 0b01111000 == 0b01111000
+        of = other.bits & 0b01111000 == 0b01111000
+        if sf: # self is special
+            if self.bits & 0b00000111 != 0: # NaN
+                return self # NaN
+            if of:
+                if other.bits & 0b00000111 != 0: # NaN
+                    return other # NaN
+            # self is inf
+            if other.is_zero():
+                return NaN1
+            sign = self.get_sign_val() != other.get_sign_val()
             return PosInf if sign == 0 else NegInf
-        # now numbers
-        (ss,sm,se) = self.get_extended_rep()
-        (os,om,oe) = other.get_extended_rep()
+        elif of: # other is special
+            if other.bits & 0b00000111 != 0:
+                return other # NaN
+            if self.is_zero():
+                return NaN1
+            sign = self.get_sign_val() != other.get_sign_val()
+            return PosInf if sign == 0 else NegInf
+                                
+        # now numbers 
+        (ss,sm,se) = self.get_int_rep() # val == ss * sm * 2^se
+        (os,om,oe) = other.get_int_rep() # val == os * om * 2^oe
         # multiply mantissas and add exponents
         mul = sm * om
         exp = se + oe
-        return self.from_rep(sign, mul, exp)
+        return self.from_rep(ss != os, mul, exp)
 
     def __truediv__(self, other):
         return NotImplementedError("Division is not implemented for FP8.")
